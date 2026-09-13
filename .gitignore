@@ -6,3 +6,6 @@ node_modules/
 certs/
 test-results/
 playwright-report/
+.vercel/
+# Local laptop troubleshooting notes are not part of the deployed application.
+docs/camera-diagnosis.md

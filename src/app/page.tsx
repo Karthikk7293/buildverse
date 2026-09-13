@@ -1,5 +1,5 @@
-import Game from "@/components/Game";
+import EngineLab from "@/components/engine/EngineLab";
 
 export default function Page() {
-  return <Game />;
+  return <EngineLab />;
 }
