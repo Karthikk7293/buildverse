@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import "./engine.css";
 
 export const metadata: Metadata = {
-  title: "Buildverse — Better built together",
-  description: "Two builders. One forest. Ten minutes. Collect, collaborate, and bring your woodland blueprint to life in a real-time 3D building adventure.",
+  title: "Kinetic — Interactive Engine Lab",
+  description: "Take a single-cylinder engine apart, explore every angle, and put it back in motion. An interactive 3D engine workbench with local webcam hand controls.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -202,7 +202,7 @@ async function main() {
     for (const [code, room] of rooms) if (room.state.players.every((p) => !p.connected) && Date.now() - Math.max(room.updated, room.state.endsAt ?? 0) > 30 * 60 * 1000) rooms.delete(code);
   }, 60000).unref();
   server.listen(port, hostname, () => {
-    console.log(`\n  Buildverse is ready at ${useTls ? "https" : "http"}://localhost:${port}\n`);
+    console.log(`\n  Kinetic Engine Lab is ready at ${useTls ? "https" : "http"}://localhost:${port}\n`);
     for (const entries of Object.values(networkInterfaces())) for (const entry of entries ?? []) if (entry.family === "IPv4" && !entry.internal) console.log(`  Share on your network: ${useTls ? "https" : "http"}://${entry.address}:${port}\n`);
   });
 }

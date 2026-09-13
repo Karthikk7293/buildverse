@@ -1,0 +1,33 @@
+import type { CSSProperties } from "react";
+export type LabIconName = "engine" | "hand" | "cube" | "layers" | "crosshair" | "rotate" | "zoomIn" | "zoomOut" | "expand" | "play" | "pause" | "arrow" | "chevron" | "close" | "check" | "eye" | "cut" | "reset" | "book" | "camera" | "cameraOff" | "pointer" | "tool" | "info" | "spark" | "undo" | "grid" | "lock";
+const paths: Record<LabIconName, React.ReactNode> = {
+  engine: <><path d="M3 8h4V5h10v3h3v11H7v-3H3V8Zm5-6h8M12 2v3M1 10v4m19-3h3v5h-3"/><path d="m13 8-3 5h4l-3 5"/></>,
+  hand: <><path d="M8 12V5a2 2 0 0 1 4 0v6-8a2 2 0 0 1 4 0v8-6a2 2 0 0 1 4 0v10c0 5-3 7-7 7-3 0-5-2-7-5l-3-4c-1-2 1-4 3-2l2 1Zm12-4a2 2 0 0 1 3 2v4"/></>,
+  cube: <><path d="m12 3 9 5v9l-9 5-9-5V8l9-5Zm0 10 9-5M3 8l9 5v9M7 5.8l9 5"/></>,
+  layers: <><path d="m12 2 10 5-10 5L2 7l10-5ZM2 12l10 5 10-5M2 17l10 5 10-5"/></>,
+  crosshair: <><circle cx="12" cy="12" r="6"/><path d="M12 2v5m0 10v5M2 12h5m10 0h5"/></>,
+  rotate: <><path d="M4 10a8 8 0 0 1 15-4m1 8a8 8 0 0 1-15 4M4 3v7h7m9 11v-7h-7"/></>,
+  zoomIn: <><circle cx="10" cy="10" r="7"/><path d="m16 16 6 6M7 10h6m-3-3v6"/></>,
+  zoomOut: <><circle cx="10" cy="10" r="7"/><path d="m16 16 6 6M7 10h6"/></>,
+  expand: <path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/>,
+  play: <path d="m8 4 12 8-12 8V4Z"/>,
+  pause: <><path d="M8 4v16M16 4v16"/></>,
+  arrow: <path d="M4 12h16m-6-6 6 6-6 6"/>,
+  chevron: <path d="m9 5 7 7-7 7"/>,
+  close: <path d="m6 6 12 12M6 18 18 6"/>,
+  check: <path d="m5 12 4 4L19 6"/>,
+  eye: <><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></>,
+  cut: <><path d="m4 4 16 16M5 10v8l7 4 7-4v-8L12 6l-7 4Zm7 4v8m-7-12 7 4 7-4M12 2v2"/></>,
+  reset: <><path d="M3 9a9 9 0 1 1 1 9M3 3v6h6"/></>,
+  book: <><path d="M12 5C9 3 5 3 2 4v15c4-1 7-1 10 1m0-15c3-2 7-2 10-1v15c-4-1-7-1-10 1V5Z"/></>,
+  camera: <><rect x="2" y="5" width="15" height="14" rx="3"/><path d="m17 10 5-4v12l-5-4"/><circle cx="9" cy="12" r="3"/></>,
+  cameraOff: <><path d="m2 2 20 20M7 5h8a2 2 0 0 1 2 2v3l5-4v12l-5-4M2 7v10a2 2 0 0 0 2 2h11M8 10a3 3 0 0 0 4 4"/></>,
+  pointer: <path d="m5 2 15 13-8 1-4 7L5 2Z"/>,
+  tool: <path d="M21 3a6 6 0 0 1-8 8L5 21a3 3 0 0 1-4-4l10-8a6 6 0 0 1 8-8l-4 4 4 2 2-4Z"/>,
+  info: <><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/></>,
+  spark: <><path d="m12 2 2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5L12 2Z"/></>,
+  undo: <><path d="M9 4 3 10l6 6m-6-6h11a7 7 0 0 1 7 7v3"/></>,
+  grid: <><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1"/><rect x="3" y="15" width="6" height="6" rx="1"/><rect x="15" y="15" width="6" height="6" rx="1"/></>,
+  lock: <><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></>,
+};
+export function LabIcon({ name, size = 20, style, className }: { name: LabIconName; size?: number; style?: CSSProperties; className?: string }) { return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.55" strokeLinecap="round" strokeLinejoin="round" style={style} className={className} aria-hidden="true">{paths[name]}</svg>; }

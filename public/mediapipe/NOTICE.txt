@@ -1,0 +1,9 @@
+MediaPipe Tasks Vision runtime
+Package: @mediapipe/tasks-vision 1.0.1
+Copyright The MediaPipe Authors.
+License: Apache License, Version 2.0 (see LICENSE).
+Source: https://github.com/google-ai-edge/mediapipe
+
+The JavaScript and WebAssembly files in this directory are unmodified copies
+from the npm package. The application uses the classic vision_bundle.js in
+a dedicated local worker.

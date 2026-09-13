@@ -3,16 +3,19 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "node --import tsx server.ts",
+    "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",
-    "start": "NODE_ENV=production node --import tsx server.ts",
+    "start": "next start --hostname 0.0.0.0",
+    "dev:lan": "node --import tsx server.ts",
+    "start:lan": "NODE_ENV=production node --import tsx server.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/*.test.ts",
-    "test:browser": "node tests/browser-smoke.mjs"
+    "test:browser": "node tests/engine-smoke.mjs"
   },
   "dependencies": {
     "@fontsource/dm-sans": "^5.3.0",
     "@fontsource/manrope": "^5.3.0",
+    "@mediapipe/tasks-vision": "^1.0.1",
     "next": "^15.5.12",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
