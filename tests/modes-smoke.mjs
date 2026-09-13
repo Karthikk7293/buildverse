@@ -1,0 +1,56 @@
+import { chromium } from "@playwright/test";
+import assert from "node:assert/strict";
+
+const browser = await chromium.launch({ executablePath: process.env.BROWSER_PATH || "/opt/google/chrome/chrome", headless: true, args: ["--no-sandbox", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
+const base = process.env.BASE_URL || "http://localhost:3000";
+const errors = [];
+try {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1050 } });
+  await context.addInitScript(() => localStorage.setItem("buildverse-quality", "low"));
+  const page = await context.newPage();
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto(base, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: /^Single player/ }).click();
+  assert.equal(await page.getByRole("button", { name: /^Single player/ }).getAttribute("aria-pressed"), "true");
+  assert.equal(await page.getByRole("button", { name: "Join a friend" }).count(), 0);
+  await page.getByLabel("What should we call you?").fill("Solo Oak");
+  await page.screenshot({ path: "/tmp/buildverse-solo-selection.png", fullPage: true });
+  await page.getByRole("button", { name: "Start solo build", exact: true }).click();
+  await page.getByRole("heading", { name: "Taking shape." }).waitFor();
+  assert.equal(await page.locator(".scene-badge").textContent(), "SOLO ADVENTURE");
+  assert.equal(await page.locator(".player-row").count(), 1);
+  assert.equal(await page.getByRole("button", { name: "Copy invite link" }).count(), 0);
+  assert.equal(await page.getByRole("button", { name: "Enable voice chat" }).count(), 0);
+  await page.waitForTimeout(1300);
+  assert.notEqual(await page.locator(".game-timer>strong").textContent(), "10:00");
+  await page.getByRole("button", { name: "Open settings" }).click();
+  assert.equal(await page.getByRole("switch", { name: "Voice chat" }).isDisabled(), true);
+  await page.getByRole("button", { name: "All set" }).click();
+  await page.reload({ waitUntil: "networkidle" });
+  await page.getByRole("heading", { name: "Taking shape." }).waitFor();
+  assert.equal(await page.locator(".scene-badge").textContent(), "SOLO ADVENTURE");
+  assert.equal(await page.locator(".player-row").count(), 1);
+  await page.getByRole("button", { name: "Leave solo build" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Leave build" }).click();
+  await page.getByRole("button", { name: "Start solo build", exact: true }).waitFor();
+  await page.getByRole("button", { name: /^Multiplayer/ }).click();
+  await page.getByRole("button", { name: "Let’s build together" }).click();
+  await page.locator(".invite-code strong").waitFor();
+  await page.getByRole("button", { name: "I’m ready to build" }).click();
+  await page.waitForTimeout(1200);
+  assert.equal(await page.locator(".game-timer>strong").textContent(), "10:00");
+  const code = await page.locator(".invite-code strong").textContent();
+  await page.getByRole("button", { name: "Leave room", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Leave room" }).click();
+  await page.getByRole("button", { name: /^Single player/ }).click();
+  // Invitation links select multiplayer even when solo was last selected.
+  await page.goto(`${base}/?room=${code}`, { waitUntil: "networkidle" });
+  assert.equal(await page.getByRole("button", { name: /^Multiplayer/ }).getAttribute("aria-pressed"), "true");
+  assert.equal(await page.locator("#room-code").inputValue(), code);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: /^Single player/ }).click();
+  await page.screenshot({ path: "/tmp/buildverse-modes-mobile.png", fullPage: true });
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  assert.deepEqual(errors, []);
+  console.log("Mode browser checks passed: selection, solo start/timer, one avatar, no invites or voice, reload, leave, multiplayer readiness, invitation routing, and mobile layout.");
+} finally { await browser.close(); }

@@ -1,0 +1,83 @@
+import { io } from "socket.io-client";
+import assert from "node:assert/strict";
+
+const base = process.env.BASE_URL || "http://localhost:3000";
+const clients = [];
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const until = async (predicate, timeout = 7000) => {
+  const end = Date.now() + timeout;
+  while (!predicate()) { if (Date.now() > end) throw new Error("Timed out waiting for multiplayer state"); await delay(50); }
+};
+async function connect() {
+  const client = io(base, { transports: ["websocket"], forceNew: true }); clients.push(client);
+  await new Promise((resolve, reject) => { client.once("connect", resolve); client.once("connect_error", reject); });
+  return client;
+}
+const request = (client, event, payload) => new Promise((resolve, reject) => client.timeout(4000).emit(event, payload, (err, reply) => err ? reject(err) : resolve(reply)));
+try {
+  const host = await connect(), guest = await connect(), third = await connect();
+  let state;
+  host.on("state", (next) => { state = next; });
+  const created = await request(host, "create-room", { name: "Oak", blueprint: "cabin" });
+  assert.equal(created.ok, true); const hostId = created.playerId;
+  assert.equal(created.state.mode, "multiplayer");
+  const joined = await request(guest, "join-room", { name: "Pine", code: created.state.code });
+  assert.equal(joined.ok, true);
+  const rejected = await request(third, "join-room", { name: "Third", code: created.state.code });
+  assert.equal(rejected.ok, false); assert.match(rejected.error, /already has two/);
+  guest.emit("select-blueprint", "tower"); await delay(100); assert.equal(state.blueprint, "cabin");
+  host.emit("ready"); await until(() => state.players[0].ready); assert.equal(state.status, "lobby");
+  host.emit("select-blueprint", "aframe"); await until(() => state.blueprint === "aframe");
+  assert.ok(state.players.every((p) => !p.ready));
+  host.emit("select-blueprint", "cabin"); await until(() => state.blueprint === "cabin");
+  host.emit("ready"); guest.emit("ready"); await until(() => state.status === "playing");
+  assert.equal(state.endsAt - state.startedAt, 600000);
+  host.emit("interact"); await delay(100); assert.equal(state.built.wood, 0);
+  host.emit("move", { x: -6, z: 5, destination: true });
+  await until(() => { const p = state.players.find((p) => p.id === hostId); return Math.hypot(p.x + 6, p.z - 5) < 0.3; });
+  host.emit("interact"); await until(() => state.players.find((p) => p.id === hostId).inventory.wood > 0);
+  const count = state.players.find((p) => p.id === hostId).inventory.wood;
+  assert.ok(count <= 6);
+  host.emit("move", { x: 0, z: 3.5, destination: true });
+  await until(() => { const p = state.players.find((p) => p.id === hostId); return Math.hypot(p.x, p.z - 3.5) < 0.3; });
+  let guestBuilt = 0; guest.on("state", (next) => { guestBuilt = next.built.wood; });
+  host.emit("interact"); await until(() => state.built.wood === count && guestBuilt === count);
+  assert.equal(state.players.find((p) => p.id === hostId).inventory.wood, 0);
+  const startedAt = state.startedAt;
+  host.disconnect(); await delay(100);
+  const resumedClient = await connect();
+  const resumed = await request(resumedClient, "resume-room", { code: created.state.code, token: created.token });
+  assert.equal(resumed.ok, true); assert.equal(resumed.playerId, hostId);
+  assert.equal(resumed.state.startedAt, startedAt); assert.equal(resumed.state.built.wood, count);
+  const invalid = await request(third, "resume-room", { code: created.state.code, token: "wrong" }); assert.equal(invalid.ok, false);
+  resumedClient.emit("leave-room"); await delay(100);
+  const lateJoin = await request(third, "join-room", { name: "Late", code: created.state.code });
+  assert.equal(lateJoin.ok, false); assert.match(lateJoin.error, /already started/);
+  guest.emit("leave-room"); await delay(100);
+  const invalidMode = await request(guest, "create-room", { name: "Pine", blueprint: "cabin", mode: "invalid" });
+  assert.equal(invalidMode.ok, false);
+  let soloState;
+  resumedClient.on("state", (next) => { soloState = next; });
+  const solo = await request(resumedClient, "create-room", { name: "Solo Oak", blueprint: "aframe", mode: "solo" });
+  assert.equal(solo.ok, true); assert.equal(solo.state.mode, "solo");
+  assert.equal(solo.state.status, "playing"); assert.equal(solo.state.players.length, 1);
+  assert.equal(solo.state.endsAt - solo.state.startedAt, 600000);
+  const soloJoin = await request(guest, "join-room", { name: "Pine", code: solo.state.code });
+  assert.equal(soloJoin.ok, false); assert.match(soloJoin.error, /single-player/);
+  resumedClient.emit("move", { x: -6, z: 5, destination: true });
+  await until(() => soloState && Math.hypot(soloState.players[0].x + 6, soloState.players[0].z - 5) < 0.3);
+  resumedClient.emit("interact"); await until(() => soloState.players[0].inventory.wood > 0);
+  resumedClient.emit("move", { x: 0, z: 3.5, destination: true });
+  await until(() => Math.hypot(soloState.players[0].x, soloState.players[0].z - 3.5) < 0.3);
+  resumedClient.emit("interact"); await until(() => soloState.built.wood > 0);
+  const soloBuilt = soloState.built.wood;
+  resumedClient.emit("rematch"); await delay(100); assert.equal(soloState.startedAt, solo.state.startedAt);
+  resumedClient.disconnect(); await delay(100);
+  const soloResume = await request(third, "resume-room", { code: solo.state.code, token: solo.token });
+  assert.equal(soloResume.ok, true); assert.equal(soloResume.state.mode, "solo");
+  assert.equal(soloResume.state.players.length, 1); assert.equal(soloResume.state.built.wood, soloBuilt);
+  assert.equal(soloResume.state.startedAt, solo.state.startedAt);
+  third.emit("leave-room"); await delay(100);
+  console.log("Solo checks passed: immediate start, one player, no joins, collection, building, reconnect, and timer preservation.");
+  console.log(JSON.stringify({ status: "passed", checks: ["maximum two players", "host-only blueprint", "changing blueprint clears readiness", "ready gate", "ten-minute duration", "server-driven movement", "resource pickup", "shared block deposit", "inventory conservation", "reconnection token", "invalid token rejection", "late joins rejected"], blocksDelivered: count }, null, 2));
+} finally { clients.forEach((client) => client.disconnect()); }
