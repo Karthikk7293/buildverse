@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { PARTS, applyAssembly, canInstall, canRemove, cycleState, nextInstallation, nextRemoval, pistonMotion, type PartId } from "../src/lib/engine";
-import { readHand, zoomDelta, type Landmark } from "../src/lib/hand-gestures";
+import { fingerZoomDelta, readHand, zoomDelta, type Landmark } from "../src/lib/hand-gestures";
 
 test("assemblies dismantle and rebuild through the complete dependency graph", () => {
   let removed: PartId[] = [];
@@ -73,4 +73,22 @@ test("zoom follows hand separation with bounded steps and no divide-by-zero", ()
   assert.equal(zoomDelta(0, .3), 0); assert.equal(zoomDelta(.3, 0), 0);
   assert.ok(zoomDelta(.3, .33) > 0); assert.ok(zoomDelta(.33, .3) < 0);
   assert.equal(zoomDelta(.1, .9), .16); assert.equal(zoomDelta(.9, .1), -.16);
+  assert.equal(zoomDelta(NaN, .3), 0); assert.equal(zoomDelta(.3, Infinity), 0);
+});
+test("finger zoom ignores small jitter and stays bounded at closed or widely spread fingers", () => {
+  assert.equal(fingerZoomDelta(.5, .51), 0);
+  assert.equal(fingerZoomDelta(.5, .49), 0);
+  assert.equal(fingerZoomDelta(0, .1), 0);
+  assert.equal(fingerZoomDelta(1.9, 2.4), 0);
+  assert.ok(fingerZoomDelta(.3, .6) > 0);
+  assert.ok(fingerZoomDelta(.6, .3) < 0);
+  assert.ok(Math.abs(fingerZoomDelta(.15, 1.8)) <= .11);
+});
+test("moving a hand closer to the camera does not change its finger zoom signal", () => {
+  const points = hand(.6);
+  const larger = points.map((p) => ({ x: p.x * 1.5, y: p.y * 1.5 }));
+  const a = readHand({ label: "Right", landmarks: points })!;
+  const b = readHand({ label: "Right", landmarks: larger })!;
+  assert.ok(Math.abs(a.pinchRatio - b.pinchRatio) < 1e-9);
+  assert.equal(fingerZoomDelta(a.pinchRatio, b.pinchRatio), 0);
 });

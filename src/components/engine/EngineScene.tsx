@@ -9,6 +9,7 @@ import { createEngine } from "./engine-model";
 export type CameraView = "Perspective" | "Front" | "Back" | "Left" | "Right" | "Top" | "Bottom";
 export type SceneHandle = {
   orbit: (dx: number, dy: number) => void;
+  pan: (dx: number, dy: number) => void;
   zoom: (delta: number) => void;
   reset: () => void;
   view: (view: CameraView) => void;
@@ -19,7 +20,7 @@ export type SceneHandle = {
 type Props = {
   selected: PartId | null; removed: PartId[]; mode: ViewMode; exploded: number; cutaway: boolean;
   xray: boolean; isolated: boolean; labels: boolean; playing: boolean; speed: number; angle: number;
-  onSelect: (id: PartId) => void; onAngle: (angle: number) => void;
+  onSelect: (id: PartId) => void; onAngle: (angle: number) => void; onZoom: (percent: number) => void;
 };
 
 const EngineScene = forwardRef<SceneHandle, Props>(function EngineScene(props, ref) {
@@ -28,7 +29,7 @@ const EngineScene = forwardRef<SceneHandle, Props>(function EngineScene(props, r
   const [error, setError] = useState(""); const [ready, setReady] = useState(false);
   latest.current = props;
   useImperativeHandle(ref, () => ({
-    orbit: (x, y) => api.current?.orbit(x, y), zoom: (delta) => api.current?.zoom(delta), reset: () => api.current?.reset(),
+    orbit: (x, y) => api.current?.orbit(x, y), pan: (x, y) => api.current?.pan(x, y), zoom: (delta) => api.current?.zoom(delta), reset: () => api.current?.reset(),
     view: (view) => api.current?.view(view), focus: (id) => api.current?.focus(id), pick: (x, y) => api.current?.pick(x, y) ?? null,
     preview: (id, amount) => api.current?.preview(id, amount),
   }), []);
@@ -47,8 +48,16 @@ const EngineScene = forwardRef<SceneHandle, Props>(function EngineScene(props, r
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(37, 1, .05, 100); camera.position.set(8, 6.1, 10.4);
     const controls = new OrbitControls(camera, renderer.domElement); controls.target.set(0, 1.7, 0);
+    camera.position.sub(controls.target).setLength(13.3).add(controls.target);
     controls.enableDamping = true; controls.dampingFactor = .13; controls.minDistance = 2; controls.maxDistance = 30;
     controls.maxPolarAngle = Math.PI; controls.rotateSpeed = .75; controls.zoomSpeed = .8; controls.update();
+    // OrbitControls also reports touch pinches and the existing zoom buttons.
+    let lastZoom = 0;
+    const reportZoom = () => {
+      const percent = Math.round(13.3 / camera.position.distanceTo(controls.target) * 100);
+      if (percent !== lastZoom) { lastZoom = percent; latest.current.onZoom(percent); }
+    };
+    controls.addEventListener("change", reportZoom); reportZoom();
     const environment = new RoomEnvironment(); const pmrem = new THREE.PMREMGenerator(renderer);
     const env = pmrem.fromScene(environment, .04); scene.environment = env.texture; environment.dispose(); pmrem.dispose();
     scene.add(new THREE.HemisphereLight(0xf2f6ff, 0xa3a096, 1.3));
@@ -84,6 +93,13 @@ const EngineScene = forwardRef<SceneHandle, Props>(function EngineScene(props, r
     api.current = {
       pick, reset: () => setView("Perspective"), view: setView,
       orbit: (dx, dy) => { const s = new THREE.Spherical().setFromVector3(camera.position.clone().sub(controls.target)); s.theta -= dx * 5; s.phi = THREE.MathUtils.clamp(s.phi - dy * 5, .001, Math.PI - .001); camera.position.copy(new THREE.Vector3().setFromSpherical(s).add(controls.target)); controls.update(); },
+      pan: (dx, dy) => {
+        const height = 2 * camera.position.distanceTo(controls.target) * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+        const shift = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).multiplyScalar(dx * height * camera.aspect)
+          .addScaledVector(new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1), -dy * height);
+        const target = controls.target.clone().add(shift).clamp(new THREE.Vector3(-10, -8, -10), new THREE.Vector3(10, 12, 10));
+        camera.position.add(target.clone().sub(controls.target)); controls.target.copy(target); controls.update();
+      },
       zoom: (delta) => { const offset = camera.position.clone().sub(controls.target); offset.setLength(THREE.MathUtils.clamp(offset.length() * Math.exp(-delta), 2, 30)); camera.position.copy(controls.target).add(offset); controls.update(); },
       focus: (id) => { const center = new THREE.Vector3(...PART_BY_ID[id].center).add(model.parts[id].position); const dir = camera.position.clone().sub(controls.target).normalize(); controls.target.copy(center); camera.position.copy(center).addScaledVector(dir, 5); controls.update(); },
       preview: (id, amount = 0) => { preview = id ? { id, amount } : null; },
@@ -139,7 +155,7 @@ const EngineScene = forwardRef<SceneHandle, Props>(function EngineScene(props, r
     };
     frame = requestAnimationFrame(draw); setReady(true);
     return () => {
-      cancelAnimationFrame(frame); resize.disconnect(); api.current = null; controls.dispose();
+      cancelAnimationFrame(frame); resize.disconnect(); api.current = null; controls.removeEventListener("change", reportZoom); controls.dispose();
       renderer.domElement.removeEventListener("pointerdown", pointerDown); renderer.domElement.removeEventListener("pointerup", pointerUp); renderer.domElement.removeEventListener("dblclick", doubleClick); renderer.domElement.removeEventListener("webglcontextlost", lostContext);
       const geometries = new Set<THREE.BufferGeometry>(), mats = new Set<THREE.Material>();
       scene.traverse((obj) => { if (obj instanceof THREE.Mesh || obj instanceof THREE.LineSegments) { geometries.add(obj.geometry); for (const m of Array.isArray(obj.material) ? obj.material : [obj.material]) mats.add(m); } });
