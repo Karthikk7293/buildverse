@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-export type LabIconName = "engine" | "hand" | "cube" | "layers" | "crosshair" | "rotate" | "zoomIn" | "zoomOut" | "expand" | "play" | "pause" | "arrow" | "chevron" | "close" | "check" | "eye" | "cut" | "reset" | "book" | "camera" | "cameraOff" | "pointer" | "tool" | "info" | "spark" | "undo" | "grid" | "lock";
+export type LabIconName = "engine" | "hand" | "cube" | "layers" | "crosshair" | "rotate" | "zoomIn" | "zoomOut" | "expand" | "play" | "pause" | "arrow" | "chevron" | "close" | "check" | "eye" | "cut" | "reset" | "book" | "camera" | "cameraOff" | "pointer" | "tool" | "info" | "spark" | "undo" | "grid" | "lock" | "pan";
 const paths: Record<LabIconName, React.ReactNode> = {
   engine: <><path d="M3 8h4V5h10v3h3v11H7v-3H3V8Zm5-6h8M12 2v3M1 10v4m19-3h3v5h-3"/><path d="m13 8-3 5h4l-3 5"/></>,
   hand: <><path d="M8 12V5a2 2 0 0 1 4 0v6-8a2 2 0 0 1 4 0v8-6a2 2 0 0 1 4 0v10c0 5-3 7-7 7-3 0-5-2-7-5l-3-4c-1-2 1-4 3-2l2 1Zm12-4a2 2 0 0 1 3 2v4"/></>,
@@ -9,6 +9,7 @@ const paths: Record<LabIconName, React.ReactNode> = {
   rotate: <><path d="M4 10a8 8 0 0 1 15-4m1 8a8 8 0 0 1-15 4M4 3v7h7m9 11v-7h-7"/></>,
   zoomIn: <><circle cx="10" cy="10" r="7"/><path d="m16 16 6 6M7 10h6m-3-3v6"/></>,
   zoomOut: <><circle cx="10" cy="10" r="7"/><path d="m16 16 6 6M7 10h6"/></>,
+  pan: <path d="M12 2v20M2 12h20M8 6l4-4 4 4M8 18l4 4 4-4M6 8l-4 4 4 4M18 8l4 4-4 4"/>,
   expand: <path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/>,
   play: <path d="m8 4 12 8-12 8V4Z"/>,
   pause: <><path d="M8 4v16M16 4v16"/></>,

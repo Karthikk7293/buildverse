@@ -58,8 +58,14 @@ Click **Enable hand controls**, allow camera access, and keep one or two hands v
 | Pinch and move on a slider | Adjust it |
 | Pinch and move over the engine in Inspect / Simulate | Rotate |
 | Pinch a part in Assemble, move, then release | Remove or reinstall if dependencies permit |
-| Pinch with both hands and separate / bring together | Zoom in / out |
+| **Finger zoom** tool: pinch over the viewer, then spread / close thumb and index | Zoom in / out with one hand; lower the hand to stop |
+| Pinch with both hands and separate / bring together | Zoom in / out in any tool |
+| **Pan** tool: pinch and move | Reposition the view; release to stop |
+| **Separate parts** tool: pinch and lift / lower | Spread / bring together assemblies visually |
+| Point at Focus, Reset view, or +/− and pinch to click | Focus a part, restore the camera, or zoom in small steps |
 | Hold one open palm for about one second | Pause / resume hand controls; pausing also stops playback |
+
+The hand-tool bar beneath the viewer shows the selected tool and live instructions. The zoom percentage beside +/− reflects the actual camera distance, including touch pinches on phones. Finger zoom starts only after a pinch over the viewer; pointing at a control, switching tools, or losing tracking ends it. Small changes in finger spacing are filtered to reduce jitter. Separate parts is unavailable during simulation and does not remove any assemblies.
 
 Lost tracking cancels a grab without committing it. Recognition uses palm-relative thresholds, hysteresis, and smoothing. Switching from two-hand zoom to a single hand requires releasing the pinch. **Stop camera** terminates tracking and releases the stream.
 
