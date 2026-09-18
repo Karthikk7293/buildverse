@@ -13,7 +13,7 @@ Open **http://localhost:3000**. The standard Next.js server binds to `0.0.0.0`. 
 
 ## Deploy to Vercel and test on a phone
 
-1. Import the **Buildverse** repository into Vercel and deploy the `feat/engine-lab-vercel` branch. Use the **Next.js** framework preset, repository root as the root directory, and `npm run build` as the build command. Leave the output directory at its framework default. If importing defaults to `main`, select this feature branch for the deployment or set it as the project's production branch.
+1. Import the **Buildverse** repository into Vercel and deploy the `main` branch. Use the **Next.js** framework preset, repository root as the root directory, and `npm run build` as the build command. Leave the output directory at its framework default. Use `main` as the production branch for this version of the engine lab.
 2. No environment variables, database, Socket.IO server, or API keys are needed for the engine lab. `vercel.json` selects Next.js explicitly. The engine, camera page, worker, WASM, and model are all included in this repository.
 3. Open the generated **HTTPS** URL directly in your phone's browser. Try `/camera-check`, tap **Test camera**, and allow camera access. Use the camera chooser if your phone has multiple inputs.
 4. Return to `/`, prop the phone up with the front camera facing you, and tap **Enable hand controls**. Use good lighting and keep your hands in frame. The initial model download can take a little time on mobile data.
